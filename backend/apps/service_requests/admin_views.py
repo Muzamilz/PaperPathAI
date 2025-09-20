@@ -14,6 +14,7 @@ from .serializers import ServiceRequestAdminSerializer, UserSerializer
 from django.conf import settings
 from .tasks import send_status_update_email
 from .email_fallback import send_status_update_email_sync
+from .email_disabled import send_status_update_email_disabled
 
 
 class AdminServiceRequestViewSet(viewsets.ModelViewSet):
@@ -106,10 +107,15 @@ class AdminServiceRequestViewSet(viewsets.ModelViewSet):
         
         service_request.save()
         
-        # Send email notification to client about status change
+        # Email notification about status change (disabled for now)
         if old_status != new_status:
             try:
-                if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', True):
+                email_backend = getattr(settings, 'EMAIL_BACKEND', '')
+                
+                if 'dummy' in email_backend.lower():
+                    # Emails disabled - use dummy function
+                    send_status_update_email_disabled(service_request.id, old_status, new_status, 'en')
+                elif getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', True):
                     # Send email synchronously (for free tier deployment)
                     send_status_update_email_sync(service_request.id, old_status, new_status, 'en')
                 else:
@@ -117,7 +123,7 @@ class AdminServiceRequestViewSet(viewsets.ModelViewSet):
                     send_status_update_email.delay(service_request.id, old_status, new_status, 'en')
             except Exception as e:
                 # Log error but don't fail the status update
-                print(f"Failed to send status update email for request {service_request.id}: {e}")
+                print(f"Email notification handling for request {service_request.id}: {e}")
         
         serializer = self.get_serializer(service_request)
         return Response(serializer.data)

@@ -11,6 +11,10 @@ from .email_fallback import (
     send_request_confirmation_email_sync, 
     send_admin_notification_email_sync
 )
+from .email_disabled import (
+    send_request_confirmation_email_disabled,
+    send_admin_notification_email_disabled
+)
 
 
 class PublicServiceRequestViewSet(viewsets.ModelViewSet):
@@ -38,23 +42,29 @@ class PublicServiceRequestViewSet(viewsets.ModelViewSet):
         else:
             language = 'en'
         
-        # Send email notifications (async if Celery available, sync otherwise)
+        # Email notifications (disabled for now)
         try:
-            if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', True):
+            # Check if emails are enabled
+            email_backend = getattr(settings, 'EMAIL_BACKEND', '')
+            
+            if 'dummy' in email_backend.lower():
+                # Emails disabled - use dummy functions
+                send_request_confirmation_email_disabled(service_request.id, language)
+                notification_type = 'urgent_request' if service_request.priority in ['high', 'urgent'] else 'new_request'
+                send_admin_notification_email_disabled(service_request.id, notification_type)
+            elif getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', True):
                 # Send emails synchronously (for free tier deployment)
                 send_request_confirmation_email_sync(service_request.id, language)
-                
                 notification_type = 'urgent_request' if service_request.priority in ['high', 'urgent'] else 'new_request'
                 send_admin_notification_email_sync(service_request.id, notification_type)
             else:
                 # Send emails asynchronously (when Redis/Celery available)
                 send_request_confirmation_email.delay(service_request.id, language)
-                
                 notification_type = 'urgent_request' if service_request.priority in ['high', 'urgent'] else 'new_request'
                 send_admin_notification_email.delay(service_request.id, notification_type)
         except Exception as e:
             # Log error but don't fail the request creation
-            print(f"Failed to send email notifications for request {service_request.id}: {e}")
+            print(f"Email notification handling for request {service_request.id}: {e}")
         
         # Return success response without sensitive data
         return Response({
