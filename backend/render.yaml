@@ -1,0 +1,130 @@
+services:
+  # Django Backend API
+  - type: web
+    name: student-services-backend
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: |
+      python manage.py migrate
+      gunicorn config.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: student-services-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://student-services-frontend.onrender.com,http://localhost:3000"
+      - key: FRONTEND_URL
+        value: "https://student-services-frontend.onrender.com"
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.smtp.EmailBackend"
+      - key: EMAIL_HOST
+        value: "smtp.gmail.com"
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "true"
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@studentservices.com"
+
+  # Celery Worker for Background Tasks
+  - type: worker
+    name: student-services-celery-worker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A config worker -l info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: student-services-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+
+  # Celery Beat for Periodic Tasks
+  - type: worker
+    name: student-services-celery-beat
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A config beat -l info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: student-services-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: student-services-redis
+          property: connectionString
+
+databases:
+  - name: student-services-db
+    databaseName: student_services
+    user: student_services_user
+
+services:
+  - type: redis
+    name: student-services-redis
+    ipAllowList: []

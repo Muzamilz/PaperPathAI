@@ -1,0 +1,54 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+{{ block.super }}
+
+{% if dashboard_links %}
+<div class="module" id="dashboard-links">
+    <table>
+        <caption>
+            <a href="#" class="section" title="{% trans 'Show/hide dashboard links' %}">
+                {% trans 'Quick Dashboard Links' %}
+            </a>
+        </caption>
+        {% for link in dashboard_links %}
+        <tr class="model-{{ link.title|slugify }}">
+            <th scope="row">
+                <a href="{{ link.url }}">
+                    <span class="dashboard-icon">{{ link.icon }}</span>
+                    {{ link.title }}
+                </a>
+            </th>
+            <td>{{ link.description }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<style>
+.dashboard-icon {
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+#dashboard-links {
+    margin-bottom: 20px;
+}
+#dashboard-links table {
+    width: 100%;
+}
+#dashboard-links th {
+    text-align: left;
+    padding: 8px 12px;
+}
+#dashboard-links td {
+    padding: 8px 12px;
+    color: #666;
+    font-size: 0.9em;
+}
+#dashboard-links tr:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endif %}
+{% endblock %}
