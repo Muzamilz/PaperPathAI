@@ -193,11 +193,12 @@ else:
 CORS_ALLOW_CREDENTIALS = True
 
 # Celery Configuration
-# Use Redis for production, memory for development
-if DEBUG:
-    CELERY_TASK_ALWAYS_EAGER = True  # Execute tasks synchronously in development
-    CELERY_TASK_EAGER_PROPAGATES = True
-else:
+# For free tier deployment without Redis, run tasks synchronously
+CELERY_TASK_ALWAYS_EAGER = config('CELERY_TASK_ALWAYS_EAGER', default=True, cast=bool)
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# Redis configuration (only used if CELERY_TASK_ALWAYS_EAGER=False)
+if not CELERY_TASK_ALWAYS_EAGER:
     CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
     CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 

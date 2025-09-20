@@ -5,7 +5,12 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from .models import ServiceRequest
 from .serializers import ServiceRequestPublicSerializer
+from django.conf import settings
 from .tasks import send_request_confirmation_email, send_admin_notification_email
+from .email_fallback import (
+    send_request_confirmation_email_sync, 
+    send_admin_notification_email_sync
+)
 
 
 class PublicServiceRequestViewSet(viewsets.ModelViewSet):
@@ -33,14 +38,20 @@ class PublicServiceRequestViewSet(viewsets.ModelViewSet):
         else:
             language = 'en'
         
-        # Send email notifications asynchronously
+        # Send email notifications (async if Celery available, sync otherwise)
         try:
-            # Send confirmation email to client
-            send_request_confirmation_email.delay(service_request.id, language)
-            
-            # Send notification to admin (urgent if high priority)
-            notification_type = 'urgent_request' if service_request.priority in ['high', 'urgent'] else 'new_request'
-            send_admin_notification_email.delay(service_request.id, notification_type)
+            if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', True):
+                # Send emails synchronously (for free tier deployment)
+                send_request_confirmation_email_sync(service_request.id, language)
+                
+                notification_type = 'urgent_request' if service_request.priority in ['high', 'urgent'] else 'new_request'
+                send_admin_notification_email_sync(service_request.id, notification_type)
+            else:
+                # Send emails asynchronously (when Redis/Celery available)
+                send_request_confirmation_email.delay(service_request.id, language)
+                
+                notification_type = 'urgent_request' if service_request.priority in ['high', 'urgent'] else 'new_request'
+                send_admin_notification_email.delay(service_request.id, notification_type)
         except Exception as e:
             # Log error but don't fail the request creation
             print(f"Failed to send email notifications for request {service_request.id}: {e}")

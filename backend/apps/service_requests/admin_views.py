@@ -11,7 +11,9 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import ServiceRequest
 from .serializers import ServiceRequestAdminSerializer, UserSerializer
+from django.conf import settings
 from .tasks import send_status_update_email
+from .email_fallback import send_status_update_email_sync
 
 
 class AdminServiceRequestViewSet(viewsets.ModelViewSet):
@@ -107,8 +109,12 @@ class AdminServiceRequestViewSet(viewsets.ModelViewSet):
         # Send email notification to client about status change
         if old_status != new_status:
             try:
-                # Default to English for admin-initiated changes, could be enhanced to detect client's preferred language
-                send_status_update_email.delay(service_request.id, old_status, new_status, 'en')
+                if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', True):
+                    # Send email synchronously (for free tier deployment)
+                    send_status_update_email_sync(service_request.id, old_status, new_status, 'en')
+                else:
+                    # Send email asynchronously (when Redis/Celery available)
+                    send_status_update_email.delay(service_request.id, old_status, new_status, 'en')
             except Exception as e:
                 # Log error but don't fail the status update
                 print(f"Failed to send status update email for request {service_request.id}: {e}")
