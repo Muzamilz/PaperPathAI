@@ -15,22 +15,17 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-pro
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-# ALLOWED_HOSTS configuration
-# Always allow Render domains in production
-if DEBUG:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
-else:
-    # Production: allow Render domains and any configured hosts
-    allowed_hosts_str = config('ALLOWED_HOSTS', default='*')
-    if allowed_hosts_str == '*':
-        ALLOWED_HOSTS = ['*']
-    else:
-        ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
-        # Always add Render domains in production
-        render_hosts = ['paperpathai.onrender.com', '.onrender.com']
-        for host in render_hosts:
-            if host not in ALLOWED_HOSTS:
-                ALLOWED_HOSTS.append(host)
+# ALLOWED_HOSTS configuration - Fixed for Render deployment
+ALLOWED_HOSTS = ['*']  # Allow all hosts for production deployment
+
+# Alternative specific configuration (commented out)
+# ALLOWED_HOSTS = [
+#     'paperpathai.onrender.com',
+#     '.onrender.com',
+#     'localhost',
+#     '127.0.0.1',
+#     '0.0.0.0'
+# ]
 
 # Application definition
 DJANGO_APPS = [
