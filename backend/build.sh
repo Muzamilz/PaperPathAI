@@ -5,9 +5,17 @@ set -o errexit  # exit on error
 
 echo "🚀 Starting build process..."
 
+# Upgrade pip first
+echo "⬆️ Upgrading pip..."
+pip install --upgrade pip
+
 # Install Python dependencies
 echo "📦 Installing Python dependencies..."
-pip install -r requirements.txt
+if [ -f requirements-prod.txt ]; then
+    pip install -r requirements-prod.txt
+else
+    pip install -r requirements.txt
+fi
 
 # Collect static files
 echo "📁 Collecting static files..."

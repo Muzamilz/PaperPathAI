@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/portfolio/', include('apps.portfolio.urls')),
     path('api/contact/', include('apps.contact.urls')),
     path('api/dashboard/', include('apps.dashboard.urls')),
+    path('', include('apps.health.urls')),  # Health checks at root level
 ]
 
 if settings.DEBUG:
