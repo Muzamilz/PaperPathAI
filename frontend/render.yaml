@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: student-services-frontend
+    name: paperpathai-frontend
     env: node
     buildCommand: |
       npm ci
@@ -10,8 +10,8 @@ services:
       - key: NODE_VERSION
         value: 18.17.0
       - key: VITE_API_BASE_URL
-        value: "https://student-services-backend.onrender.com/api"
+        value: "https://paperpathai.onrender.com/api"
       - key: VITE_APP_NAME
-        value: "Student Services"
+        value: "PaperPathAI"
       - key: VITE_APP_DESCRIPTION
         value: "Professional student services platform"
