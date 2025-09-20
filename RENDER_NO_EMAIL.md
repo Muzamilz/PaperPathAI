@@ -149,8 +149,17 @@ After deployment:
 - **API**: `https://paperpathAI-backend.onrender.com/api`
 
 ### **Admin Login**
-- **Username**: `admin`
-- **Password**: `admin123` (change this!)
+Choose either admin account:
+
+**Ahmed Admin:**
+- **Username**: `ahmed`
+- **Email**: `ahmed@admin.com`
+- **Password**: `735817677`
+
+**Muzamil Admin:**
+- **Username**: `muzamil`
+- **Email**: `muzamil@admin.com`
+- **Password**: `muzamil2001117`
 
 ---
 

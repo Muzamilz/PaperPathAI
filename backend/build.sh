@@ -25,15 +25,29 @@ python manage.py collectstatic --noinput
 echo "🗄️ Running database migrations..."
 python manage.py migrate
 
-# Create superuser if it doesn't exist
-echo "👤 Creating superuser..."
+# Create superusers if they don't exist
+echo "👤 Creating superusers..."
 python manage.py shell -c "
 from django.contrib.auth.models import User
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@studentservices.com', 'admin123')
-    print('Superuser created successfully')
+
+# Create Ahmed admin user
+if not User.objects.filter(email='ahmed@admin.com').exists():
+    User.objects.create_superuser('ahmed', 'ahmed@admin.com', '735817677')
+    print('Ahmed superuser created successfully')
 else:
-    print('Superuser already exists')
+    print('Ahmed superuser already exists')
+
+# Create Muzamil admin user
+if not User.objects.filter(email='muzamil@admin.com').exists():
+    User.objects.create_superuser('muzamil', 'muzamil@admin.com', 'muzamil2001117')
+    print('Muzamil superuser created successfully')
+else:
+    print('Muzamil superuser already exists')
+
+# Remove default admin user if it exists
+if User.objects.filter(username='admin').exists():
+    User.objects.filter(username='admin').delete()
+    print('Default admin user removed')
 "
 
 # Load initial data if needed
